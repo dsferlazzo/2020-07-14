@@ -10,6 +10,7 @@ import it.polito.tdp.PremierLeague.model.Action;
 import it.polito.tdp.PremierLeague.model.Match;
 import it.polito.tdp.PremierLeague.model.Player;
 import it.polito.tdp.PremierLeague.model.Team;
+import it.polito.tdp.PremierLeague.model.TeamScore;
 
 public class PremierLeagueDAO {
 	
@@ -35,7 +36,10 @@ public class PremierLeagueDAO {
 			return null;
 		}
 	}
-	
+	/**
+	 * ritorna la lista di tutte le squadre presenti nel database
+	 * @return
+	 */
 	public List<Team> listAllTeams(){
 		String sql = "SELECT * FROM Teams";
 		List<Team> result = new ArrayList<Team>();
@@ -48,6 +52,50 @@ public class PremierLeagueDAO {
 
 				Team team = new Team(res.getInt("TeamID"), res.getString("Name"));
 				result.add(team);
+			}
+			conn.close();
+			return result;
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	/**
+	 * ritorna la lista di tutti i team nel db, associati al loro punteggio
+	 * @return
+	 */
+	public List<TeamScore> getTeamScores(){
+		String sql = "WITH vincite "
+				+ "AS "
+				+ "	( "
+				+ "	SELECT t.TeamID, COUNT(*) AS vittorie "
+				+ "	FROM matches m, teams t "
+				+ "	WHERE (t.TeamID = m.TeamHomeID AND m.ResultOfTeamHome=1) "
+				+ "	OR (t.TeamID = m.TeamAwayID AND m.ResultOfTeamHome=-1) "
+				+ "	GROUP BY t.TeamID  "
+				+ "	), "
+				+ "pareggi AS "
+				+ "	( "
+				+ "	SELECT t.TeamID, COUNT(*) AS pareggi "
+				+ "	FROM matches m, teams t "
+				+ "	WHERE (t.TeamID= m.TeamHomeID OR t.TeamID = m.TeamAwayID) "
+				+ "		AND m.ResultOfTeamHome=0 "
+				+ "	GROUP BY t.TeamID "
+				+ "	) "
+				+ "SELECT t.TeamID, t.Name, ((3*v.vittorie)+pareggi) AS punteggio "
+				+ "FROM teams t, pareggi p, vincite v "
+				+ "WHERE t.TeamID = p.TeamID AND t.TeamID = v.TeamID";
+		List<TeamScore> result = new ArrayList<TeamScore>();
+		Connection conn = DBConnect.getConnection();
+
+		try {
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet res = st.executeQuery();
+			while (res.next()) {
+
+				Team team = new Team(res.getInt("TeamID"), res.getString("Name"));
+				result.add(new TeamScore(team, res.getInt("punteggio")));
 			}
 			conn.close();
 			return result;

@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 import it.polito.tdp.PremierLeague.model.Model;
+import it.polito.tdp.PremierLeague.model.Team;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -35,7 +36,7 @@ public class FXMLController {
     private Button btnSimula; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbSquadra"
-    private ComboBox<?> cmbSquadra; // Value injected by FXMLLoader
+    private ComboBox<Team> cmbSquadra; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtN"
     private TextField txtN; // Value injected by FXMLLoader
@@ -48,16 +49,35 @@ public class FXMLController {
 
     @FXML
     void doClassifica(ActionEvent event) {
-
+    	txtResult.clear();
+    	Team t = cmbSquadra.getValue();
+    	if(t==null) {
+    		txtResult.appendText("Selezionare una squadra");
+    		return;
+    	}
+    	txtResult.appendText(this.model.getClassifica(t));
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-
+    	txtResult.clear();
+    	txtResult.appendText(this.model.creaGrafo());
     }
 
     @FXML
     void doSimula(ActionEvent event) {
+    	txtResult.clear();
+    	int N = -1;
+    	int K = -1;
+    	try {
+    	N = Integer.parseInt(txtN.getText());
+    	K = Integer.parseInt(txtX.getText());
+    	} catch(Exception e) {
+    		txtResult.appendText("Inserire dei valori validi nei campi N ed X");
+    		return;
+    	}
+    	txtResult.appendText(this.model.effettuaSimulazione(N, K));
+    
 
     }
 
@@ -74,5 +94,6 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	this.cmbSquadra.getItems().addAll(this.model.getAllTeams());
     }
 }
